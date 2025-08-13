@@ -1,10 +1,11 @@
-const express = require('express');
+import express from 'express';
+import { authMiddleware } from '../middlewares/authMiddleware.js';
+import * as userController from '../controllers/userController.js';
+
 const router = express.Router();
-const { authMiddleware } = require('../middlewares/authMiddleware');
-const userController = require('../controllers/userController');
 
 router.get('/me', authMiddleware, userController.me);
 router.get('/me/history', authMiddleware, userController.history);
 router.get('/me/favorites', authMiddleware, userController.favorites);
 
-module.exports = router;
+export default router;

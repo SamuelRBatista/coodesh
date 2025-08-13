@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const HistorySchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
@@ -8,4 +8,4 @@ const HistorySchema = new mongoose.Schema({
 
 HistorySchema.index({ userId: 1, word: 1 }, { unique: true });
 
-module.exports = mongoose.model('History', HistorySchema);
+export default mongoose.model('History', HistorySchema);
