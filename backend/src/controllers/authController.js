@@ -6,6 +6,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'changeme';
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
 
 export async function signup(req, res, next) {
+  debugger;
   try {
     const { name, email, password } = req.body;
     if (!name || !email || !password)

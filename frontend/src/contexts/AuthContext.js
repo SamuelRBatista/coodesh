@@ -10,8 +10,7 @@ export default function AuthProvider({ children }) {
   useEffect(() => {
     if (token) {
       localStorage.setItem('token', token);
-      api.defaults.headers.common['Authorization'] = token;
-
+      api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       api.get('/user/me')
         .then(res => setUser(res.data))
         .catch(() => {
@@ -28,7 +27,7 @@ export default function AuthProvider({ children }) {
 
   const signin = async (email, password) => {
     const res = await api.post('/auth/signin', { email, password });
-    setToken(res.data.token);
+    setToken(res.data.token); // <-- Salva o token
     return res.data;
   };
 

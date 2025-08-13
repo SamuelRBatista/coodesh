@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 
-dotenv.config({ path: '../config.env' });
+dotenv.config(); // já vai ler o .env na raiz do backend
 
 const connectDB = async () => {
   try {
@@ -10,11 +10,13 @@ const connectDB = async () => {
       console.log('MONGO_URI not set, skipping MongoDB connection');
       return;
     }
-    await mongoose.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true });
+    await mongoose.connect(uri, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true
+    });
     console.log('MongoDB connected');
   } catch (error) {
     console.log('MongoDB connection failed:', error.message);
-    console.log('Continuing without database...');
   }
 };
 

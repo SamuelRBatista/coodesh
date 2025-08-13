@@ -1,40 +1,54 @@
-import React, { useState, useContext } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { AuthContext } from '../contexts/AuthContext';
-import { TextField, Button, Box, Typography } from '@mui/material';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
+import { Box, TextField, Typography } from '@mui/material';
+import api from '../services/api';
+import WordCard from '../components/WordCard';
 
-export default function SignupPage(){
-  const { signup } = useContext(AuthContext);
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState(null);
-  const navigate = useNavigate();
+export default function WordListPage(){
+  const [words, setWords] = useState([]);
+  const [page, setPage] = useState(1);
+  const [hasNext, setHasNext] = useState(true);
+  const [search, setSearch] = useState('');
+  const loader = useRef(null);
 
-  const submit = async (e) => {
-    e.preventDefault();
-    try {
-      await signup(name, email, password);
-      navigate('/words');
-    } catch (err) {
-      setError(err.response?.data?.message || 'Signup failed');
-    }
-  };
+  useEffect(() => { setWords([]); setPage(1); setHasNext(true); }, [search]);
+
+  useEffect(() => {
+    debugger;
+    let mounted = true;
+    const fetchPage = async () => {
+      try {
+        const res = await api.get('/entries/en', { params: { search, limit: 20, page } });
+        if (!mounted) return;
+        setWords(prev => [...prev, ...res.data.results]);
+        setHasNext(res.data.hasNext);
+      } catch (err) { console.error(err); }
+    };
+    fetchPage();
+    return () => { mounted = false };
+  }, [page, search]);
+
+  const handleObserver = useCallback((entries) => {
+    const target = entries[0];
+    if (target.isIntersecting && hasNext) setPage(prev => prev + 1);
+  }, [hasNext]);
+
+  useEffect(() => {
+    const option = { root: null, rootMargin: '20px', threshold: 1.0 };
+    const observer = new IntersectionObserver(handleObserver, option);
+    if (loader.current) observer.observe(loader.current);
+    return () => observer.disconnect();
+  }, [handleObserver]);
+
+  const openWord = (word) => { window.location.href = `/word/${encodeURIComponent(word)}` };
+  const toggleFavorite = async (word) => { await api.post(`/entries/en/${encodeURIComponent(word)}/favorite`); };
 
   return (
-    <Box sx={{ maxWidth: 480, mx: 'auto' }}>
-      <Typography variant="h5" gutterBottom>Cadastro</Typography>
-      <form onSubmit={submit}>
-        <TextField label="Nome" fullWidth margin="normal" value={name} onChange={e=>setName(e.target.value)} />
-        <TextField label="Email" fullWidth margin="normal" value={email} onChange={e=>setEmail(e.target.value)} />
-        <TextField label="Password" fullWidth margin="normal" type="password" value={password} onChange={e=>setPassword(e.target.value)} />
-        {error && <Typography color="error">{error}</Typography>}
-        <Button type="submit" variant="contained" sx={{ mt: 2 }}>Criar conta</Button>
-      </form>
-      <Box sx={{ mt: 2 }}>
-        <Typography variant="body2">Já tem conta? <Link to="/login">Entrar</Link></Typography>
-      </Box>
+    <Box>
+      <Typography variant="h5" gutterBottom>Palavras</Typography>
+      <TextField fullWidth placeholder="Pesquisar..." value={search} onChange={(e)=>setSearch(e.target.value)} sx={{ mb: 2 }} />
+      {words.map(w => <WordCard key={w} word={w} onOpen={openWord} favorited={false} onToggleFavorite={toggleFavorite} />)}
+      <div ref={loader} />
+      {!hasNext && <Typography sx={{ mt:2 }}>Fim da lista</Typography>}
     </Box>
   );
 }
-

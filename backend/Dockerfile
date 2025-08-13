@@ -1,15 +1,16 @@
-FROM node:18-alpine
+FROM node:18
 
 WORKDIR /app
 
 COPY package*.json ./
 
+# Instala dependências sem problemas de permissão
 RUN npm install
 
 COPY . .
 
-RUN npm install -g nodemon
+# Expõe porta da API e porta do debugger
+EXPOSE 5000 9229
 
-EXPOSE 5000
-
-CMD ["nodemon", "src/server.js"]
+# Rodar Node em modo debug, aguardando conexão de debugger externo
+CMD ["npm", "run", "start:debug"]

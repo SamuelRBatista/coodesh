@@ -11,6 +11,7 @@ export default function LoginPage(){
   const navigate = useNavigate();
 
   const submit = async (e) => {
+    debugger;
     e.preventDefault();
     try {
       await signin(email, password);
