@@ -1,13 +1,12 @@
-const Word = require('../models/Word');
-const History = require('../models/History');
-const Favorite = require('../models/Favorite');
-const dictionaryService = require('../services/dictionaryService');
-const redis = require('../config/redis');
+import Word from '../models/Word.js';
+import History from '../models/History.js';
+import Favorite from '../models/Favorite.js';
+import { fetchWord } from '../services/dictionaryService.js';  // função importada direto
+import redis from '../config/redis.js';
 
 const TTL = parseInt(process.env.CACHE_TTL_SECONDS || '86400', 10);
 
-// GET /entries/en?search=&limit=&page=
-exports.listWords = async (req, res, next) => {
+export async function listWords(req, res, next) {
   try {
     const search = (req.query.search || '').trim();
     const limit = Math.min(parseInt(req.query.limit, 10) || 20, 100);
@@ -32,35 +31,37 @@ exports.listWords = async (req, res, next) => {
   } catch (err) {
     next(err);
   }
-};
+}
 
-// GET /entries/en/:word
-exports.getWord = async (req, res, next) => {
+export async function getWord(req, res, next) {
   try {
     const { word } = req.params;
     const key = `word:${word.toLowerCase()}`;
     const start = Date.now();
 
-    // try cache
     let cached = null;
-    try { cached = await redis.get(key); } catch (e) { console.warn('Redis get failed', e.message); }
+    try {
+      cached = await redis.get(key);
+    } catch (e) {
+      console.warn('Redis get failed', e.message);
+    }
 
     if (cached) {
-      // register history
       await History.create({ userId: req.user.id, word });
       res.setHeader('x-cache', 'HIT');
       res.setHeader('x-response-time', `${Date.now() - start}`);
       return res.json(JSON.parse(cached));
     }
 
-    // fetch from external API
-    const body = await dictionaryService.fetchWord(word);
+    const body = await fetchWord(word);
     if (!body) return res.status(404).json({ message: 'Word not found' });
 
-    // cache
-    try { await redis.set(key, JSON.stringify(body), 'EX', TTL); } catch (e) { console.warn('Redis set failed', e.message); }
+    try {
+      await redis.set(key, JSON.stringify(body), 'EX', TTL);
+    } catch (e) {
+      console.warn('Redis set failed', e.message);
+    }
 
-    // save history
     await History.create({ userId: req.user.id, word });
 
     res.setHeader('x-cache', 'MISS');
@@ -69,9 +70,9 @@ exports.getWord = async (req, res, next) => {
   } catch (err) {
     next(err);
   }
-};
+}
 
-exports.favoriteWord = async (req, res, next) => {
+export async function favoriteWord(req, res, next) {
   try {
     const { word } = req.params;
     await Favorite.updateOne(
@@ -83,9 +84,9 @@ exports.favoriteWord = async (req, res, next) => {
   } catch (err) {
     next(err);
   }
-};
+}
 
-exports.unfavoriteWord = async (req, res, next) => {
+export async function unfavoriteWord(req, res, next) {
   try {
     const { word } = req.params;
     await Favorite.deleteOne({ userId: req.user.id, word });
@@ -93,4 +94,4 @@ exports.unfavoriteWord = async (req, res, next) => {
   } catch (err) {
     next(err);
   }
-};
+}

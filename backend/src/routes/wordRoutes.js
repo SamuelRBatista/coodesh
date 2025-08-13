@@ -1,7 +1,8 @@
-const express = require('express');
+import express from 'express';
+import * as entriesController from '../controllers/entriesController.js';
+import { authMiddleware } from '../middlewares/authMiddleware.js';
+
 const router = express.Router();
-const entriesController = require('../controllers/entriesController');
-const { authMiddleware } = require('../middlewares/authMiddleware');
 
 // List words (public)
 router.get('/en', entriesController.listWords);
@@ -13,4 +14,4 @@ router.get('/en/:word', authMiddleware, entriesController.getWord);
 router.post('/en/:word/favorite', authMiddleware, entriesController.favoriteWord);
 router.delete('/en/:word/unfavorite', authMiddleware, entriesController.unfavoriteWord);
 
-module.exports = router;
+export default router;

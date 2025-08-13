@@ -1,7 +1,7 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const WordSchema = new mongoose.Schema({
   word: { type: String, required: true, unique: true, index: true }
 }, { timestamps: true });
 
-module.exports = mongoose.model('Word', WordSchema);
+export default mongoose.model('Word', WordSchema);

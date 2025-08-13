@@ -1,13 +1,12 @@
-const express = require('express');
-const cors = require('cors');
-const morgan = require('morgan');
-const rateLimit = require('express-rate-limit');
+import express from 'express';
+import cors from 'cors';
+import morgan from 'morgan';
+import rateLimit from 'express-rate-limit';
 
-const authRoutes = require('./routes/authRoutes');
-const wordRoutes = require('./routes/wordRoutes');
-const userRoutes = require('./routes/userRoutes');
-const { errorHandler } = require('./middlewares/errorHandler');
-
+import authRoutes from './routes/authRoutes.js';
+import wordRoutes from './routes/wordRoutes.js';
+import userRoutes from './routes/userRoutes.js';
+import { errorHandler } from './middlewares/errorHandler.js';
 
 const app = express();
 
@@ -28,4 +27,4 @@ app.use('/user', userRoutes);
 
 app.use(errorHandler);
 
-module.exports = app;
+export default app;

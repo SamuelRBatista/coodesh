@@ -1,25 +1,32 @@
-// Usage: node src/utils/import_words.js --file=./words.txt --batch=1000
-const fs = require('fs');
-const path = require('path');
-const yargs = require('yargs');
-const mongoose = require('mongoose');
-require('dotenv').config({ path: '../../config.env' });
-const Word = require('../models/Word');
+import fs from 'fs';
+import path from 'path';
+import yargs from 'yargs';
+import mongoose from 'mongoose';
+import dotenv from 'dotenv';
+import Word from '../models/Word.js'; // Note a extensão .js
 
-(async () => {
-  const argv = yargs.option('file', { type: 'string', demandOption: true }).option('batch', { type: 'number', default: 1000 }).argv;
-  const file = path.resolve(process.cwd(), argv.file);
-  if (!fs.existsSync(file)) {
-    console.error('File not found', file);
-    process.exit(1);
-  }
+dotenv.config({ path: '../../config.env' });
 
-  const uri = process.env.MONGO_URI;
-  if (!uri) {
-    console.error('MONGO_URI not set in .env');
-    process.exit(1);
-  }
+// yargs no ES Modules para obter argv:
+const argv = yargs(process.argv.slice(2))
+  .option('file', { type: 'string', demandOption: true })
+  .option('batch', { type: 'number', default: 1000 })
+  .parse();
 
+const file = path.resolve(process.cwd(), argv.file);
+
+if (!fs.existsSync(file)) {
+  console.error('File not found', file);
+  process.exit(1);
+}
+
+const uri = process.env.MONGO_URI;
+if (!uri) {
+  console.error('MONGO_URI not set in .env');
+  process.exit(1);
+}
+
+async function main() {
   await mongoose.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true });
   console.log('Connected to MongoDB');
 
@@ -33,11 +40,15 @@ const Word = require('../models/Word');
       await Word.insertMany(chunk, { ordered: false });
       console.log(`Inserted ${Math.min(i + batchSize, words.length)} / ${words.length}`);
     } catch (err) {
-      // duplicates likely; keep going
       console.warn('Batch insert warning', err.message);
     }
   }
 
   console.log('Import finished');
   process.exit(0);
-})();
+}
+
+main().catch(err => {
+  console.error('Error:', err);
+  process.exit(1);
+});
