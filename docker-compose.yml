@@ -1,6 +1,28 @@
-version: "3.9"
+version: '3.8'
 
 services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    ports:
+      - "5000:5000"   # API
+      - "9229:9229"   # Debug Node
+    environment:
+      - NODE_ENV=development
+      - JWT_SECRET=super_secret_key_12345!@
+      - JWT_EXPIRES_IN=7d
+      - MONGO_URI=mongodb://mongo:27017/dictionary_db
+      - REDIS_URL=redis://redis:6379
+      - FREE_DICTIONARY_BASE=https://api.dictionaryapi.dev/api/v2/entries
+      - CACHE_TTL_SECONDS=86400
+    depends_on:
+      - mongo
+      - redis
+
   frontend:
     build:
       context: ./frontend
@@ -12,24 +34,9 @@ services:
       - "3000:3000"
     environment:
       - CHOKIDAR_USEPOLLING=true
+      - REACT_APP_API_URL=http://localhost:5000
     depends_on:
       - backend
-
-  backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-    volumes:
-      - ./backend:/app
-      - /app/node_modules
-    ports:
-      - "5000:5000"   # API
-      - "9229:9229"   # Debugger
-    environment:
-      - NODE_ENV=development
-    depends_on:
-      - mongo
-      - redis
 
   mongo:
     image: mongo:4.4

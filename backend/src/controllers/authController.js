@@ -6,7 +6,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'changeme';
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
 
 export async function signup(req, res, next) {
-  debugger;
+ 
   try {
     const { name, email, password } = req.body;
     if (!name || !email || !password)
@@ -22,7 +22,7 @@ export async function signup(req, res, next) {
       expiresIn: JWT_EXPIRES_IN,
     });
 
-    res.status(200).json({ id: user._id, name: user.name, token: `Bearer ${token}` });
+    res.status(200).json({ id: user._id, name: user.name, token });
   } catch (err) {
     next(err);
   }
@@ -30,6 +30,7 @@ export async function signup(req, res, next) {
 
 export async function signin(req, res, next) {
   try {
+    console.log('Body recebido no signin:', req.body);
     const { email, password } = req.body;
     if (!email || !password)
       return res.status(400).json({ message: 'Missing fields' });
@@ -43,7 +44,7 @@ export async function signin(req, res, next) {
     const token = jwt.sign({ id: user._id, email: user.email }, JWT_SECRET, {
       expiresIn: JWT_EXPIRES_IN,
     });
-    res.json({ id: user._id, name: user.name, token: `Bearer ${token}` });
+     res.json({ id: user._id, name: user.name, token });
   } catch (err) {
     next(err);
   }

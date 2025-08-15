@@ -4,13 +4,21 @@ import api from '../services/api';
 export const AuthContext = createContext();
 
 export default function AuthProvider({ children }) {
+  // Inicializa o token removendo "Bearer " se existir
+  const [token, setToken] = useState(() => {
+    const stored = localStorage.getItem('token');
+    return stored ? stored.replace(/^Bearer\s+/i, '') : null;
+  });
+
   const [user, setUser] = useState(null);
-  const [token, setToken] = useState(localStorage.getItem('token') || null);
 
   useEffect(() => {
     if (token) {
+     
       localStorage.setItem('token', token);
+  
       api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    
       api.get('/user/me')
         .then(res => setUser(res.data))
         .catch(() => {
@@ -27,13 +35,19 @@ export default function AuthProvider({ children }) {
 
   const signin = async (email, password) => {
     const res = await api.post('/auth/signin', { email, password });
-    setToken(res.data.token); // <-- Salva o token
+   
+    const cleanToken = (res.data.token || '').replace(/^Bearer\s+/i, '');
+    setToken(cleanToken);
+
     return res.data;
   };
 
   const signup = async (name, email, password) => {
     const res = await api.post('/auth/signup', { name, email, password });
-    setToken(res.data.token);
+
+    const cleanToken = (res.data.token || '').replace(/^Bearer\s+/i, '');
+    setToken(cleanToken);
+
     return res.data;
   };
 

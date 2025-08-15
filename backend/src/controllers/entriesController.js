@@ -1,27 +1,45 @@
 import Word from '../models/Word.js';
 import History from '../models/History.js';
 import Favorite from '../models/Favorite.js';
-import { fetchWord } from '../services/dictionaryService.js';  // função importada direto
+import { fetchWord } from '../services/dictionaryService.js'; 
 import redis from '../config/redis.js';
 
 const TTL = parseInt(process.env.CACHE_TTL_SECONDS || '86400', 10);
 
 export async function listWords(req, res, next) {
+  debugger;
   try {
     const search = (req.query.search || '').trim();
     const limit = Math.min(parseInt(req.query.limit, 10) || 20, 100);
     const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
 
-    const filter = search ? { word: { $regex: `^${search}`, $options: 'i' } } : {};
-    const totalDocs = await Word.countDocuments(filter);
-    const totalPages = Math.max(Math.ceil(totalDocs / limit), 1);
-    const results = await Word.find(filter).sort({ word: 1 }).skip((page - 1) * limit).limit(limit).lean();
+    let filter = search
+      ? { word: { $regex: `^${search}`, $options: 'i' } }
+      : {};
 
-    res.setHeader('x-cache', 'MISS');
-    res.setHeader('x-response-time', '0');
+    let totalDocs = await Word.countDocuments(filter);
+    let totalPages = Math.max(Math.ceil(totalDocs / limit), 1);
+    let results = await Word.find(filter)
+      .sort({ word: 1 })
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .lean();
+
+    // Se não encontrou nada no DB, buscar na API
+    if (results.length === 0 && search) {
+      const apiData = await fetchWord(search);
+      if (apiData && Array.isArray(apiData)) {
+        // Salvar a palavra no Mongo
+        await Word.create({ word: search, data: apiData });
+        // Retornar a palavra para o frontend
+        results = [{ word: search }];
+        totalDocs = 1;
+        totalPages = 1;
+      }
+    }
 
     res.json({
-      results: results.map(r => r.word),
+      results: results.map(r => r.word), // sempre retorna lista de strings
       totalDocs,
       page,
       totalPages,
@@ -29,7 +47,8 @@ export async function listWords(req, res, next) {
       hasPrev: page > 1
     });
   } catch (err) {
-    next(err);
+    console.error('Erro no listWords:', err);
+    res.status(500).json({ error: 'Erro ao buscar palavra' });
   }
 }
 
