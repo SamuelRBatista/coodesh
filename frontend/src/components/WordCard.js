@@ -5,7 +5,7 @@ import { Favorite, FavoriteBorder } from '@mui/icons-material';
 export default function WordCard({ word, onOpen, favorited = false, onToggleFavorite }) {
 
   const handleFavorite = (e) => {
-    e.stopPropagation(); // evita que clique no favorito abra a palavra
+    e.stopPropagation(); 
     if(onToggleFavorite) onToggleFavorite(word);
   };
 

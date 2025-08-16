@@ -3,11 +3,11 @@ import path from 'path';
 import yargs from 'yargs';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
-import Word from '../models/Word.js'; // Note a extensão .js
+import Word from '../models/Word.js'; 
 
 dotenv.config({ path: '../../config.env' });
 
-// yargs no ES Modules para obter argv:
+
 const argv = yargs(process.argv.slice(2))
   .option('file', { type: 'string', demandOption: true })
   .option('batch', { type: 'number', default: 1000 })
